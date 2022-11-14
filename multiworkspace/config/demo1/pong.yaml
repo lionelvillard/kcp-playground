@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pong
+  namespace: demo1
+spec:
+  selector:
+    matchLabels:
+      app: pong
+  template:
+    metadata:
+      labels:
+        app: pong
+    spec:
+      containers:
+        - name: pong
+          image: ko://playground/cmd/pong
+          ports:
+          - containerPort: 8080
+            name: tcp
+            protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: pong
+  namespace: demo1
+  labels:
+    app: pong
+spec:
+  selector:
+    app: pong
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+      name: tcp

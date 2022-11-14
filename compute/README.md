@@ -40,7 +40,9 @@ The document describes the steps to
     kubectl kcp workload sync kind --syncer-image=ghcr.io/kcp-dev/kcp/syncer:main -o kind-syncer.yaml
     ```
 
-  This command creates a SyncTarget, a Location and an APIExport. 
+  This command creates a SyncTarget, a Location and an APIExport.
+
+  > For local dev, use kubectl kcp workload sync kind --syncer-image=kind.local/syncer  -o kind-syncer.yaml
 
 - (optional) In another terminal, create a kind cluster:
 

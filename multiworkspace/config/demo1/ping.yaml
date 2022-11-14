@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ping
+  namespace: demo1
+spec:
+  selector:
+    matchLabels:
+      app: ping
+  template:
+    metadata:
+      labels:
+        app: ping
+    spec:
+      containers:
+        - name: ping
+          image: ko://playground/cmd/ping
+          env:
+            - name: TARGET
+              value: "http://pong.demo1.svc.cluster.local"
