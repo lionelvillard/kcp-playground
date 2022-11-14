@@ -68,7 +68,7 @@ The document describes the steps to
   default   synctargets   1           1                    6m55s
   ```
 
-The `kind` workspace is a compute workspace. By default, Deployments, Services
+  The `kind` workspace is a compute workspace. By default, Deployments, Services
 and Ingresses are imported from the location:
 
    ```shell 
@@ -81,7 +81,7 @@ and Ingresses are imported from the location:
 
 Let's import these resources in your workspace.
 
-## bind to an user workspace
+## Bind to a user workspace
 
 - Create a workspace of default type (from organiation: universal)
 
