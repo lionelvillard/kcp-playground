@@ -16,4 +16,4 @@ spec:
           image: ko://playground/cmd/ping
           env:
             - name: TARGET
-              value: "http://pong.demo2-1.svc.cluster.local"
+              value: PODIP
