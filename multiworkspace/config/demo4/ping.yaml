@@ -1,0 +1,21 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ping
+spec:
+  selector:
+    matchLabels:
+      app: ping
+  template:
+    metadata:
+      labels:
+        app: ping
+    spec:
+      containers:
+        - name: ping
+          image: ko://playground/cmd/ping-attack
+          env:
+            - name: TARGET
+              value: "http://pong.demo-bad-w2w-2.svc.cluster.local"
+            - name: DNSIP
+              value: REPLACE

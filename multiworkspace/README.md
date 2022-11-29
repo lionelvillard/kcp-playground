@@ -146,10 +146,78 @@ See [Create a workload workspace](../compute/README.md#Create-a-workload-workspa
    2022/11/15 00:19:45 ping failed: Get "http://pong.demo2-1.svc.cluster.local": dial tcp: lookup pong.demo2-1.svc.cluster.local on 10.96.144.49:53: no such host
    2022/11/15 00:19:47 ping failed: Get "http://pong.demo2-1.svc.cluster.local": dial tcp: lookup pong.demo2-1.svc.cluster.local on 10.96.144.49:53: no such host
   ```
+  
+### Breaking Workspace-to-Workspace isolation
+
+This scenario shows how a pod in workspace `user1` can attempt to resolve
+the IP of a pod in workspace `user2` to send requests to it.
+
+- In `user1` workspace, create one namespace:
+
+   ```shell
+   kubectl kcp ws root:user1; kubectl create ns demo-bad-w2w-1
+   ```
+
+- In `user2` workspace, create one namespace:
+
+   ```shell
+   kubectl kcp ws root:user2; kubectl create ns demo-bad-w2w-2
+   ```
+
+- Deploy `Pong` in `user2`:
+
+  ```shell
+  ko apply -f config/demo4/pong.yaml -- -n demo-bad-w2w-2
+  ```
+
+- Get the DNS IP of the DNS pod resolving `user2` addresses. Finding which DNS pod corresponds
+  to `user2` is a bit tricky but feasible by looking at the `ConfigMap`. In the syncer namespace, do:
+
+  ```shell 
+  kubectl get cm -oyaml
+  ```
+
+  then look for `demo-bad-w2w-2` and get the name of the ConfigMap containing it. This the also the name
+  of the DNS Service. Do:
+
+  ```shell
+  kubectl get svc <name found above>
+  NAME                             TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)         AGE
+  kcp-dns-kind-qwaqgajv-2plia53u   ClusterIP   10.96.10.16   <none>        53/UDP,53/TCP   15h
+  ```
+  
+  CLUSTER-IP is the IP you will use below.
+
+- Deploy `Ping-attack` in `user1`:
+
+  ```shell
+  kubectl kcp ws root:user1;\ 
+  cat config/demo4/ping.yaml | sed "s/REPLACE/10.96.10.16:53/" | ko apply -f - -- -n demo-bad-w2w-1
+  ```
+
+- In the ping log (with network policy PR):
+
+  ```shell
+  dialing to 10.96.10.16:53
+  2022/11/29 17:32:30 ping failed: Get "http://pong.demo-bad-w2w-2.svc.cluster.local": dial tcp: lookup pong.demo-bad-w2w-2.svc.cluster.local on 10.96.174.212:53: read udp 192.169.82.9:40943->10.96.10.16:53: read: connection refused
+  ```
+  
+- Delete the network policies:
+
+  ```shell
+  kubectl delete -n kcp-syncer-kind-1wd274wf networkpolicies.networking.k8s.io --all
+  ```
+
+- In the ping log:
+
+  ```shell
+  dialing to 10.96.10.16:53
+  2022/11/29 17:34:15 ping succeeded
+  ```
 
 ### Pod-to-Pod isolation
 
-- Look for `Pong` pod IP in workspace `user1`. Look for the physical namespace corresponding to `demo2-2`.
+- Look for `Pong` pod IP in workspace `user1`. Look for the physical namespace corresponding to `demo2-1`.
 
    ```shell
    kubectl get svc pong -ojsonpath='{.spec.clusterIP}'

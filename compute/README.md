@@ -44,10 +44,19 @@ The document describes the steps to
 
   > For local dev, use kubectl kcp workload sync kind --syncer-image=kind.local/syncer  -o kind-syncer.yaml
 
-- (optional) In another terminal, create a kind cluster:
+- (optional) In another terminal, create a kind cluster.  
+  Since the default kind CNI does not support network policies you need to disable it and install
+  an CNI plugin support network policies. You can use Calico.
 
    ```shell
-   kind create cluster
+   kind create cluster --config kind/config-calico.yaml
+   ```
+
+   Then install Calico:
+
+   ```shell
+   kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+   kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
    ```
  
 - Apply the syncer manifest to your kind cluster:
