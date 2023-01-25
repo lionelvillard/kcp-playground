@@ -1,0 +1,7 @@
+apiVersion: apis.kcp.io/v1alpha1
+kind: APIExport
+metadata:
+  name: example
+spec:
+  latestResourceSchemas:
+    - v1.crontabs.stable.example.com

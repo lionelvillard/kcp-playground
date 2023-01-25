@@ -1,12 +1,13 @@
 # Compute: bind k8s compute
 
-The document describes the steps to 
-1. create a workload workspace 
-2. bind to a workload workspace 
+This is a getting started guide about kcp and how to create workload workspaces.
 
-## Setup
+## Running kcp locally
 
-- In one terminal, start KCP:
+Assuming you have already installed kcp on you computer, run 
+the following commands.
+
+- In one terminal, start kcp:
   
   ```shell
   kcp start
@@ -44,7 +45,7 @@ The document describes the steps to
 
   > For local dev, use kubectl kcp workload sync kind --syncer-image=kind.local/syncer  -o kind-syncer.yaml
 
-- (optional) In another terminal, create a kind cluster.  
+- OPTIONAL (create a Kind cluster with Calico) In another terminal, create a kind cluster.
   Since the default kind CNI does not support network policies you need to disable it and install
   an CNI plugin support network policies. You can use Calico.
 
@@ -52,10 +53,10 @@ The document describes the steps to
    kind create cluster --config kind/config-calico.yaml
    ```
 
-   Then install Calico:
+   Install Calico:
 
    ```shell
-   kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+   kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/release-v3.24/manifests/calico.yaml
    kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
    ```
  
@@ -68,13 +69,13 @@ The document describes the steps to
 - Verify the SyncTarget is ready:
 
   ```shell
-  kubectl get synctargets.workload.kcp.dev kind -ojsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+  kubectl get synctargets.workload.kcp.io kind -ojsonpath='{.status.conditions[?(@.type=="Ready")].status}'
   True
   ```
 - Verify the number of available Location is one:
 
   ```shell
-  kubectl get locations.scheduling.kcp.dev default
+  kubectl get locations.scheduling.kcp.io default
   NAME      RESOURCE      AVAILABLE   INSTANCES   LABELS   AGE
   default   synctargets   1           1                    6m55s
   ```

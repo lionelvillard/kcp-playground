@@ -16,6 +16,8 @@ see [KCP setup](../compute/README.md#setup).
 
 See [Create a workload workspace](../compute/README.md#Create-a-workload-workspace).
 
+Make sure the workload workspace is called `root:kind`
+
 ### Create two workspaces
 
 - Create `user1` workspace
@@ -171,17 +173,17 @@ the IP of a pod in workspace `user2` to send requests to it.
   ```
 
 - Get the DNS IP of the DNS pod resolving `user2` addresses. Finding which DNS pod corresponds
-  to `user2` is a bit tricky but feasible by looking at the `ConfigMap`. In the syncer namespace, do:
+  to `user2` is a bit tricky but feasible by looking at the DNS `ConfigMap`. In the syncer namespace in the pcluster, do:
 
   ```shell 
   kubectl get cm -oyaml
   ```
 
-  then look for `demo-bad-w2w-2` and get the name of the ConfigMap containing it. This the also the name
+  then look for `demo-bad-w2w-2` and get the name of the ConfigMap containing it. This is also the name
   of the DNS Service. Do:
 
   ```shell
-  kubectl get svc <name found above>
+  kubectl get svc kcp-dns-kind-7rohw1hj-2c88xuxg # replace by name found above
   NAME                             TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)         AGE
   kcp-dns-kind-qwaqgajv-2plia53u   ClusterIP   10.96.10.16   <none>        53/UDP,53/TCP   15h
   ```
@@ -208,7 +210,7 @@ the IP of a pod in workspace `user2` to send requests to it.
   kubectl delete -n kcp-syncer-kind-1wd274wf networkpolicies.networking.k8s.io --all
   ```
 
-- In the ping log:
+- In the ping log (it can take a while for the networkpolicies to apply):
 
   ```shell
   dialing to 10.96.10.16:53
