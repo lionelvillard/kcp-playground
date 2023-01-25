@@ -1,6 +1,6 @@
 # Exporting CRDs
 
-This guide goes through the steps to export CRDs from one worskspace
+This guide goes through the steps to export CRDs as APIs from one worskspace
 and bind them from other workspaces.
 
 - Create a workspace:
@@ -9,7 +9,7 @@ and bind them from other workspaces.
 kubectl kcp ws create provider --enter
 ```
 
-- Convert CRD to an APIResourceSchema and apply it:
+- Convert the example CRD to an APIResourceSchema and apply it:
 
 ```shell
 kubectl kcp crd snapshot --filename example-crd.yaml --prefix v1 | kubectl apply -f -
@@ -45,7 +45,7 @@ kubectl api-resources | grep stable.example.com
 ```
 
 ```shell
-crontabs                          ct           stable.example.com/v1             true         CronTab
+crontabs  ct stable.example.com/v1 true CronTab
 ```
 
 - Create an CR:
