@@ -95,7 +95,7 @@ Let's import these resources in your workspace.
 
 ## Bind to a user workspace
 
-- Create a workspace of default type (from organiation: universal)
+- Create a workspace of default type (from organization: universal)
 
    ```shell
    kubectl kcp ws create mine --enter

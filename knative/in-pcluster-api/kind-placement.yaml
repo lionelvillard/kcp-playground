@@ -1,0 +1,13 @@
+apiVersion: scheduling.kcp.io/v1alpha1
+kind: Placement
+metadata:
+  name: knative-kind
+spec:
+  locationResource:
+    group: workload.kcp.io
+    version: v1alpha1
+    resource: synctargets
+  locationWorkspace: "root:kind-knative"
+  namespaceSelector: {}
+  locationSelectors:
+    - {}

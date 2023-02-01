@@ -1,0 +1,7 @@
+apiVersion: apis.kcp.io/v1alpha1
+kind: APIExport
+metadata:
+  name: serving
+spec:
+  latestResourceSchemas:
+    - v1.services.serving.knative.dev
