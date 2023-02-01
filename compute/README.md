@@ -4,7 +4,7 @@ This is a getting started guide about kcp and how to create workload workspaces.
 
 ## Running kcp locally
 
-Assuming you have already installed kcp on you computer, run 
+Assuming you have already installed kcp on your computer, run 
 the following commands.
 
 - In one terminal, start kcp:
