@@ -3,8 +3,7 @@ kind: APIExport
 metadata:
   name: example
 spec:
-  latestResourceSchemas:
-    - v1.crontabs.stable.example.com
+  latestResourceSchemas: []
   permissionClaims:
-    - resource: secrets
+    - resource: namespaces
       all: true

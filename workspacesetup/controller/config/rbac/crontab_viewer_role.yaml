@@ -1,0 +1,27 @@
+# permissions for end users to view crontabs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: crontab-viewer-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: workspacesetup
+    app.kubernetes.io/part-of: workspacesetup
+    app.kubernetes.io/managed-by: kustomize
+  name: crontab-viewer-role
+rules:
+- apiGroups:
+  - stable.example.com.stable.example.com
+  resources:
+  - crontabs
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - stable.example.com.stable.example.com
+  resources:
+  - crontabs/status
+  verbs:
+  - get

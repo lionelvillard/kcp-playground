@@ -1,0 +1,224 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: kcp-syncer-kind-othkop36
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kcp-syncer-kind-othkop36
+  namespace: kcp-syncer-kind-othkop36
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kcp-syncer-kind-othkop36-token
+  namespace: kcp-syncer-kind-othkop36
+  annotations:
+    kubernetes.io/service-account.name: kcp-syncer-kind-othkop36
+type: kubernetes.io/service-account-token
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kcp-syncer-kind-othkop36
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - namespaces
+  verbs:
+  - "create"
+  - "get"
+  - "list"
+  - "watch"
+  - "delete"
+- apiGroups:
+  - "apiextensions.k8s.io"
+  resources:
+  - customresourcedefinitions
+  verbs:
+  - "get"
+  - "watch"
+  - "list"
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  - secrets
+  - services
+  verbs:
+  - "*"
+- apiGroups:
+  - "apps"
+  resources:
+  - deployments
+  verbs:
+  - "*"
+- apiGroups:
+  - "networking.k8s.io"
+  resources:
+  - ingresses
+  verbs:
+  - "*"
+- apiGroups:
+  - "serving.knative.dev"
+  resources:
+  - services
+  verbs:
+  - "*"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kcp-syncer-kind-othkop36
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kcp-syncer-kind-othkop36
+subjects:
+- kind: ServiceAccount
+  name: kcp-syncer-kind-othkop36
+  namespace: kcp-syncer-kind-othkop36
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: kcp-dns-kind-othkop36
+  namespace: kcp-syncer-kind-othkop36
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - serviceaccounts
+  - services
+  verbs:
+  - "create"
+  - "get"
+  - "list"
+  - "update"
+  - "delete"
+  - "watch"
+- apiGroups:
+  - ""
+  resources:
+  - endpoints
+  verbs:
+  - "get"
+  - "list"
+  - "watch"
+- apiGroups:
+  - "apps"
+  resources:
+  - deployments
+  verbs:
+  - "create"
+  - "get"
+  - "list"
+  - "update"
+  - "delete"
+  - "watch"
+- apiGroups:
+  - "rbac.authorization.k8s.io"
+  resources:
+  - roles
+  - rolebindings
+  verbs:
+  - "create"
+  - "get"
+  - "list"
+  - "update"
+  - "delete"
+  - "watch"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: kcp-dns-kind-othkop36
+  namespace: kcp-syncer-kind-othkop36
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: kcp-dns-kind-othkop36
+subjects:
+  - kind: ServiceAccount
+    name: kcp-syncer-kind-othkop36
+    namespace: kcp-syncer-kind-othkop36
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: kcp-syncer-kind-othkop36
+  namespace: kcp-syncer-kind-othkop36
+stringData:
+  kubeconfig: |
+    apiVersion: v1
+    kind: Config
+    clusters:
+    - name: default-cluster
+      cluster:
+        certificate-authority-data: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURNRENDQWhpZ0F3SUJBZ0lCQWpBTkJna3Foa2lHOXcwQkFRc0ZBREFqTVNFd0h3WURWUVFEREJnNUxqYzAKTGpFeExqSTBMV05oUURFMk56VXlPRGN5TURZd0hoY05Nak13TWpBeE1qQXpNekkyV2hjTk1qUXdNakF4TWpBegpNekkyV2pBZ01SNHdIQVlEVlFRRERCVTVMamMwTGpFeExqSTBRREUyTnpVeU9EY3lNRGN3Z2dFaU1BMEdDU3FHClNJYjNEUUVCQVFVQUE0SUJEd0F3Z2dFS0FvSUJBUUNtcTQrVy9uYi9peHlzNFF2ekszN0lRMWpRMUMwNkgyajgKQ2FCa0puMjVWZG1kZllSSGxGYzBPYlp3ZkkzdXE4U3ZSRXFURnZhOXF3cjhUVGNPUUY4dEJ3aURaWFlqdzRIVAppRWRINjZvWndQNXVvK2phRGRPVGF5TG9FTWdtQzFUL1NwZjQyUW9iRE5EVTRrM3ZiZjdxSFJjZExGa2QzeVZBCldCVmhMWmtRQmlCa0VoWDl5T3V3VzArSEZGTjBrcCt3V2NpdUgrRndaSDJjeFQyWDVuVzlvbkNvMzRZZDEreXoKay9ITkE5NSt0elhZaTRmMzZHQ3BXdGk2TloySXcvTjMvSUovWUNOWWl3Wm0ydlE2NmpBYVBmTXdUaTNiblNTMQpVczFGa0R6YllVRW9XNzROZE9rcDlONGxlSXlTSjZKSTN1WVpwelVHbzR3eG9hTEYxZHdIQWdNQkFBR2pjakJ3Ck1BNEdBMVVkRHdFQi93UUVBd0lGb0RBVEJnTlZIU1VFRERBS0JnZ3JCZ0VGQlFjREFUQU1CZ05WSFJNQkFmOEUKQWpBQU1COEdBMVVkSXdRWU1CYUFGQlZ6SU5XVG1nYmlmS2dDZzdQalo4NE5lbitGTUJvR0ExVWRFUVFUTUJHQwpDV3h2WTJGc2FHOXpkSWNFQ1VvTEdEQU5CZ2txaGtpRzl3MEJBUXNGQUFPQ0FRRUFNaENkWlJFd3BrWHpLbitTCmtrWU1Md3Y2SjQzU0UzL1VKWWJlR0svNGROOEJSK0tCdmsvQnA4RnNyeW5vUWF0UXFpTmJjcFZWbjY2MHFNVG8KRk9SZGVhU0k2dXNBL3NYZW5lVDNWbU1xc2xTMjhsVVcwNWs3RXVzcDI3eFBqTEI2d0llQ0ZmQ1dONVdRZFhpago4TmtXVFJDMjd0ci9XaVF5TWo3TXdmaEdwNVVWQVVyU1JxSHRQNUl0aWxMUDRMUFF3bFhVa2JBcjhqTFhvV2RiCm1reFpDTzFZL1oyY1VJZkFXVFBYb2R3OGVONEhiaWVXRFgwTk9BdUhUZndoclV0dTJSdnJ1SEwyc1A4SjN4WEcKS2lSVjNweFM2WlBLcFZsMmNmdnA4eHphY1VHL09MZzZWZjk3Mitxek9PQi9rdUxjSEg1MkluUnNSU0pLMTR3awpNZnp1L2c9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCi0tLS0tQkVHSU4gQ0VSVElGSUNBVEUtLS0tLQpNSUlEQXpDQ0FldWdBd0lCQWdJQkFUQU5CZ2txaGtpRzl3MEJBUXNGQURBak1TRXdId1lEVlFRRERCZzVMamMwCkxqRXhMakkwTFdOaFFERTJOelV5T0RjeU1EWXdIaGNOTWpNd01qQXhNakF6TXpJMldoY05NalF3TWpBeE1qQXoKTXpJMldqQWpNU0V3SHdZRFZRUUREQmc1TGpjMExqRXhMakkwTFdOaFFERTJOelV5T0RjeU1EWXdnZ0VpTUEwRwpDU3FHU0liM0RRRUJBUVVBQTRJQkR3QXdnZ0VLQW9JQkFRRExQSVpkK3BuNnVVRlRhVVZiU0dmV2dMZ1VKcjkzCk5raFBEdGlFS2hMbitNeWpWcGVQR1pDOERMazNqOG8rK3pkTjg2cUg2ajJWUUl1NVBlb05GTEl1QVJTckJWaGwKekhBK2F2dWJiV0RKc1BZSmZ0UGlQYnpndDU1Tjc5NEtBcGNaRkV4K1FDUFdBZStuVVBFYThTSmpHb2VyYmZUUgpjMS9ZWW1KMnp5bVp6K3VRSVBXL0FVUnVsNE1kek1TRFNQT3llV1RJUEJ5ckE3K0VnTTZoUWx4M1dhVzEzbG9pClcyUnVrTVRtdTFzdDMwWEhQZzJSNGNaWGF2ajQzZEprRlhTd2dGSG9xbDY2QlVNeXkySDRCVEQyK0ZsZ2FQaG8KSHZHT2pmZnVJM0k0SFBYcUIwL0dGZXJseWpwM2JPZ3dEWlJXd0ovcytsRWJTY3VpeVdlbzlxemhBZ01CQUFHagpRakJBTUE0R0ExVWREd0VCL3dRRUF3SUNwREFQQmdOVkhSTUJBZjhFQlRBREFRSC9NQjBHQTFVZERnUVdCQlFWCmN5RFZrNW9HNG55b0FvT3o0MmZPRFhwL2hUQU5CZ2txaGtpRzl3MEJBUXNGQUFPQ0FRRUFqN21vZE1tRnF0aU8KMWJ6YUhmUzFQV014U2lDcG1zSGt0d21rU3htNDdxY0wzRlJtTlRROGpqLzlvR2VJUnB4RThYemZoZ01iRy9aYwpXKy9tcW90dy9Hc2ZnaG5wTkRNakI0dGRmZG5ydFFJZzJseVVrcnBjczdvN1pCN0tobWo5WjVMditCSkd3dG8rCjRVb3JFMk43TnR3T2J1MUJyNTBXckxveTJyUitaY1plMUZUQU14bHZZSWpWY1VLaWZkTFIraDZmeVBuTndPZC8KNGxpL21Wc0k0Ri93bkZ3S3VvTUloVHpxVTRUQXUyS0Y5SlVDbXdWcUloTGx2bUJacFZOK0JjcjFyc0ZkSUdWTQpKV0NWeExpWUUrdXdrcVlzRm44Q283dWN0eU04ODVoTWpDV05iWkd3eHBxeFVQQWpRTU1tTWJvbnE0OWRpbW9RClFtYmZXUUI5Q3c9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
+        server: https://9.74.11.24:6443
+    contexts:
+    - name: default-context
+      context:
+        cluster: default-cluster
+        namespace: default
+        user: default-user
+    current-context: default-context
+    users:
+    - name: default-user
+      user:
+        token: eyJhbGciOiJSUzI1NiIsImtpZCI6IlQtaDdCZ2hIcmU5cGVlY1pqRDJMSDgtRlJ6YmRrYXVnUUFUbGwxclgtbUkifQ.eyJpc3MiOiJrdWJlcm5ldGVzL3NlcnZpY2VhY2NvdW50Iiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9jbHVzdGVyTmFtZSI6IjJybTltNTFpM3luZDlzM20iLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L25hbWVzcGFjZSI6ImRlZmF1bHQiLCJrdWJlcm5ldGVzLmlvL3NlcnZpY2VhY2NvdW50L3NlY3JldC5uYW1lIjoia2NwLXN5bmNlci1raW5kLW90aGtvcDM2LXRva2VuLTh3enhnIiwia3ViZXJuZXRlcy5pby9zZXJ2aWNlYWNjb3VudC9zZXJ2aWNlLWFjY291bnQubmFtZSI6ImtjcC1zeW5jZXIta2luZC1vdGhrb3AzNiIsImt1YmVybmV0ZXMuaW8vc2VydmljZWFjY291bnQvc2VydmljZS1hY2NvdW50LnVpZCI6IjE5ZjdhMmE4LTc3OTAtNDllZC1hYTI1LTNmNTY0MWY4NDY3MyIsInN1YiI6InN5c3RlbTpzZXJ2aWNlYWNjb3VudDpkZWZhdWx0OmtjcC1zeW5jZXIta2luZC1vdGhrb3AzNiJ9.pR4KSN7p9z5gz_ZNz4iQ5VCjC63A7YDprALK5RjD9TmZvfkHUix4xcFZnS9SA8k4x3mvsaB1X9u1rhTvNyLd-T2uu_Gzi3xK3w478Yx2ffvEs1U33lCSuJxd8sen3Os2T504In9DWYHiB9z07KJMcMjoqAQjQ5hMMrWsEdVHnDEOLrb54tO1uBFLjnMltLfJLvamp3WXfbw97JNnITNCVhEjhYwW4dRe1Y8X2Ghe5a5P_ZKsqz0Gu25FFw9XeHK67TL6M0VbkGlPuN5ypmcp4H7mNFidxSlzRxSED7aO9lwTazZxT_F37KlTdDfxMSRbVA9RbF42fGyL4pBMI9UcJQkqiRh-1DkyVHPU80CbpNA9qNGgIO4rWqAd_3UUg56hNvhgBHobk1UrUhapxFNj5jKtjU5R0rpfJR1vGVB_2WUDD_5Kxy9rXnP9NdEB0lG9SYdNGGhi102X1Eh9-UOqtwr3ylt6uSNIHWx83Q6__cjiTxVUkyq7sFS0xOUywxhDpq5QmK00pB8U1prSN_02mWPGs8iDse_6cyOWnacQ0QdPpoqqTLK-E1Ixs1qxcyITLcSSgIzmQnjKqtGIjiDYoF2Q-QakaBQubQYUs3aOZi1ASqPL5YY_rMuS8zCrIGV0XzD199jJ-zTfw2z_lQ-x38O4nBkDKpL75asA_vxiTE0
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kcp-syncer-kind-othkop36
+  namespace: kcp-syncer-kind-othkop36
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: kcp-syncer-kind-othkop36
+  template:
+    metadata:
+      labels:
+        app: kcp-syncer-kind-othkop36
+    spec:
+      containers:
+      - name: kcp-syncer
+        command:
+        - /ko-app/syncer
+        args:
+        - --from-kubeconfig=/kcp/kubeconfig
+        - --sync-target-name=kind
+        - --sync-target-uid=8c13db2b-c88e-4263-baa0-818d910d514b
+        - --from-cluster=2rm9m51i3ynd9s3m
+        - --api-import-poll-interval=1m0s
+        - --downstream-namespace-clean-delay=30s
+        - --resources=services.serving.knative.dev
+        - --qps=20
+        - --burst=30
+        - --dns-image=ghcr.io/kcp-dev/kcp/syncer:main
+        env:
+        - name: NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        image: ghcr.io/kcp-dev/kcp/syncer:main
+        imagePullPolicy: IfNotPresent
+        terminationMessagePolicy: FallbackToLogsOnError
+        volumeMounts:
+        - name: kcp-config
+          mountPath: /kcp/
+          readOnly: true
+      serviceAccountName: kcp-syncer-kind-othkop36
+      volumes:
+        - name: kcp-config
+          secret:
+            secretName: kcp-syncer-kind-othkop36
+            optional: false

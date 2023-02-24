@@ -1,0 +1,12 @@
+apiVersion: stable.example.com.stable.example.com/v1
+kind: CronTab
+metadata:
+  labels:
+    app.kubernetes.io/name: crontab
+    app.kubernetes.io/instance: crontab-sample
+    app.kubernetes.io/part-of: workspacesetup
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: workspacesetup
+  name: crontab-sample
+spec:
+  # TODO(user): Add fields here

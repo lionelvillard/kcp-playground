@@ -22,7 +22,7 @@ the following commands.
 The easiest way to install Knative is to use the [Knative quickstart installation method](https://knative.dev/docs/install/quickstart-install/).
 
 After installing the quickstart kn plugin, run this command (in a fresh new terminal):
-     
+
 ```shell
 kn quickstart kind --install-serving
 ```
@@ -36,13 +36,13 @@ This command creates a kind cluster named `knative` and installs Knative Serving
   ```shell
   kubectl kcp ws create knative --enter
   ```
-  
+
 - Apply the Knative resource schema:
 
   ```shell
   kubectl apply -f service-ars.yaml
   ```
-  
+
 - And export:
 
   ```shell
@@ -58,7 +58,7 @@ This command creates a kind cluster named `knative` and installs Knative Serving
   kubectl kcp ws
   ```
 
-- Then bind:  
+- Then bind:
 
   ```shell
   kubectl kcp bind apiexport root:knative:serving
@@ -70,7 +70,7 @@ This command creates a kind cluster named `knative` and installs Knative Serving
   kubectl api-resources | grep serving
   services                          kservice,ksvc   serving.knative.dev/v1            true         Service
   ````
-  
+
 At this point you should be able to deploy a Knative service:
 
 ```shell
@@ -86,7 +86,7 @@ Since your home workspace is not bound to a location workspace the Knative servi
 
 The easiest way to install Knative is to use the [Knative quickstart installation method](https://knative.dev/docs/install/quickstart-install/).
 
-After installing the quickstart kn plugin, run this command (in a fresh new terminal):
+- After installing the quickstart kn plugin, run this command (in a fresh new terminal):
 
   ```shell
   kn quickstart kind --install-serving
@@ -104,7 +104,7 @@ After installing the quickstart kn plugin, run this command (in a fresh new term
   ```shell
   kubectl kcp workload sync kind --resources=services.serving.knative.dev --syncer-image=ghcr.io/kcp-dev/kcp/syncer:main -o kind-syncer.yaml
   ```
-  
+
 - Apply the syncer manifest into your kind cluster:
 
   ```shell
@@ -135,13 +135,13 @@ After installing the quickstart kn plugin, run this command (in a fresh new term
 At this point I would expect the previous created Knative Service to be synchronized to the knative location but it's not happening.
 
 As a workaround, delete `hello`:
-  
+
   ```shell
   kn service delete hello
   ```
 
 And recreate:
-  
+
   ```shell
   kn service create hello \
   --image gcr.io/knative-samples/helloworld-go \
@@ -151,7 +151,7 @@ And recreate:
 
 ## Delete the placement
 
-I would expect the object to be deleted on the physical clusters. 
+I would expect the object to be deleted on the physical clusters.
 I would expect new services to not be synchronized.
 
 

@@ -1,0 +1,31 @@
+# permissions for end users to edit crontabs.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  labels:
+    app.kubernetes.io/name: clusterrole
+    app.kubernetes.io/instance: crontab-editor-role
+    app.kubernetes.io/component: rbac
+    app.kubernetes.io/created-by: workspacesetup
+    app.kubernetes.io/part-of: workspacesetup
+    app.kubernetes.io/managed-by: kustomize
+  name: crontab-editor-role
+rules:
+- apiGroups:
+  - stable.example.com.stable.example.com
+  resources:
+  - crontabs
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - stable.example.com.stable.example.com
+  resources:
+  - crontabs/status
+  verbs:
+  - get

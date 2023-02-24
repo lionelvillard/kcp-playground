@@ -1,0 +1,11 @@
+apiVersion: apis.kcp.io/v1alpha1
+kind: APILifecycle
+metadata:
+  name: example
+spec:
+  reference: example
+  hooks:
+    bind:
+      url: "localhost:8080"
+
+

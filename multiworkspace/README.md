@@ -1,9 +1,9 @@
-# Virtual Workspaces
+# Views Isolation (aka Virtual Workspaces)
 
 The document shows:
 1. services deployed in a workspace can communicate with each others.
-2. services deployed in another workspace bound to the same 
-location (or workload) workspace cannot communicate with the services created in 
+2. services deployed in another workspace bound to the same
+location (or workload) workspace cannot communicate with the services created in
 the first workspace.
 
 ## Setup
@@ -31,7 +31,7 @@ Make sure the workload workspace is called `root:kind`
    ```shell
    kubectl kcp bind compute root:kind
    ```
- 
+
 - Observe API resource availability in user1 workspace:
 
   ```{ shell .no-copy }
@@ -63,9 +63,9 @@ Make sure the workload workspace is called `root:kind`
 ### Svc-to-Svc communication, same namespace
 
 - In `user1` workspace, create a namespace
-   
+
    ```shell
-   kubectl kcp ws root:user1; kubectl create ns demo1 
+   kubectl kcp ws root:user1; kubectl create ns demo1
    ```
 
 - Deploy `Ping` and `Pong` services:
@@ -84,13 +84,13 @@ Make sure the workload workspace is called `root:kind`
 
   To find the physical namespace, run this command:
   ```shell
-  kubectl get ns -oyaml | grep -A 5 demo1 
+  kubectl get ns -oyaml | grep -A 5 demo1
   kcp.dev/namespace-locator: '{"syncTarget":{"workspace":"root:kind","name":"kind","uid":"6a749f22-44af-43a3-8e4e-a8be9c31934a"},"workspace":"root:user1","namespace":"demo1"}'
   creationTimestamp: "2022-11-15T00:24:34Z"
   labels:
     internal.workload.kcp.dev/cluster: a02KrpZo4bFNfnSgocRl7IxHx2WnZsTaUzdOTg
     kubernetes.io/metadata.name: kcp-lk6uvb9e5ldp
-  name: kcp-lk6uvb9e5ldp  <--- USE THIS 
+  name: kcp-lk6uvb9e5ldp  <--- USE THIS
   ```
 
 ### Svc-to-Svc communication, different namespaces
@@ -134,7 +134,7 @@ Make sure the workload workspace is called `root:kind`
    ```shell
    kubectl kcp ws root:user2; kubectl create ns demo3
    ```
-  
+
 - Deploy the same `Ping` deployed in `user1`, targeting `pong.demo2-1.svc.cluster.local`, in workspace `user2`:
 
   ```shell
@@ -148,7 +148,7 @@ Make sure the workload workspace is called `root:kind`
    2022/11/15 00:19:45 ping failed: Get "http://pong.demo2-1.svc.cluster.local": dial tcp: lookup pong.demo2-1.svc.cluster.local on 10.96.144.49:53: no such host
    2022/11/15 00:19:47 ping failed: Get "http://pong.demo2-1.svc.cluster.local": dial tcp: lookup pong.demo2-1.svc.cluster.local on 10.96.144.49:53: no such host
   ```
-  
+
 ### Breaking Workspace-to-Workspace isolation
 
 This scenario shows how a pod in workspace `user1` can attempt to resolve
@@ -175,7 +175,7 @@ the IP of a pod in workspace `user2` to send requests to it.
 - Get the DNS IP of the DNS pod resolving `user2` addresses. Finding which DNS pod corresponds
   to `user2` is a bit tricky but feasible by looking at the DNS `ConfigMap`. In the syncer namespace in the pcluster, do:
 
-  ```shell 
+  ```shell
   kubectl get cm -oyaml
   ```
 
@@ -187,13 +187,13 @@ the IP of a pod in workspace `user2` to send requests to it.
   NAME                             TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)         AGE
   kcp-dns-kind-qwaqgajv-2plia53u   ClusterIP   10.96.10.16   <none>        53/UDP,53/TCP   15h
   ```
-  
+
   CLUSTER-IP is the IP you will use below.
 
 - Deploy `Ping-attack` in `user1`:
 
   ```shell
-  kubectl kcp ws root:user1;\ 
+  kubectl kcp ws root:user1;\
   cat config/demo4/ping.yaml | sed "s/REPLACE/10.96.10.16:53/" | ko apply -f - -- -n demo-bad-w2w-1
   ```
 
@@ -203,7 +203,7 @@ the IP of a pod in workspace `user2` to send requests to it.
   dialing to 10.96.10.16:53
   2022/11/29 17:32:30 ping failed: Get "http://pong.demo-bad-w2w-2.svc.cluster.local": dial tcp: lookup pong.demo-bad-w2w-2.svc.cluster.local on 10.96.174.212:53: read udp 192.169.82.9:40943->10.96.10.16:53: read: connection refused
   ```
-  
+
 - Delete the network policies:
 
   ```shell
@@ -225,7 +225,7 @@ the IP of a pod in workspace `user2` to send requests to it.
    kubectl get svc pong -ojsonpath='{.spec.clusterIP}'
    10.96.190.219
    ```
-   
+
 - Deploy the same `Ping`, this time targeting the service in workspace `user1` using the pod IP:
 
   ```shell
@@ -234,12 +234,12 @@ the IP of a pod in workspace `user2` to send requests to it.
   ```
 
 - In the kind cluster, look for the physical namespace corresponding to `demo3` and do:
-  
+
   ```shell
   kubectl logs -lapp=ping -n <ns corresponding to demo3>
   2022/11/15 00:41:20 ping succeeded
   2022/11/15 00:41:22 ping succeeded
-  ``` 
-  
+  ```
+
   Currently KCP does not isolate pods using network policies. See https://github.com/kcp-dev/kcp/issues/1988 for more details.
-   
+

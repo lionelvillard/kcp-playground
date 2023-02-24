@@ -1,0 +1,13 @@
+apiVersion: apis.kcp.io/v1alpha1
+kind: APIBinding
+metadata:
+  name: example
+spec:
+  reference:
+    export:
+      name: example
+      path: root:provider
+  permissionClaims:
+    - resource: namespaces
+      all: true
+      state: Accepted
