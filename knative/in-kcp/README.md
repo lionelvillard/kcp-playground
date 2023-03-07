@@ -6,9 +6,9 @@ Status: some kcp features are still missing for this guide to be completed. WIP.
 
 ## Prerequisites
 
-- A running kcp instance.
 - A Kubernetes cluster.
 - ko (optional)
+- kcp source code clone locally and https://github.com/kcp-dev/kcp/pull/2829 checked out.
 
 ## Clone this repository
 
@@ -21,7 +21,13 @@ cd kcp-playground/knative/in-kcp
 
 ## Preparing kcp
 
-1. Make sure your KUBECONFIG points to your kcp instance:
+1. In a terminal, start kcp with pod synchronization enabled:
+
+   ```shell
+   kcp start --feature-gates KCPSyncerTunnel=true
+   ```
+
+1. In the kcp terminal, make sure your KUBECONFIG points to your kcp instance:
 
    ```shell
    export KUBECONFIG=$(pwd)/.kcp/admin.kubeconfig
@@ -41,25 +47,25 @@ cd kcp-playground/knative/in-kcp
 
 ## Registering Kind as a SyncTarget
 
-1. Create a SyncTarget:
-
-    ```shell
-    kubectl kcp workload sync kind --resources=poddisruptionbudgets.policy,horizontalpodautoscalers.autoscaling,services,endpoints,pods --syncer-image kind.local/syncer -o kind-syncer.yaml
-    ```
-
-1. Create a Kind cluster in a new terminal:
+1. In a new terminal, create a Kind cluster:
 
    ```shell
    kind create cluster
    ```
 
-1. (optional) Build the syncer image from kcp source. if not replace `kind.local/syncer` above to point to a released syncer image (eg. `ghcr.io/kcp-dev/kcp/syncer:main`).
+1. (optional) Build the syncer image from kcp source. if not replace `kind.local/syncer` below to point to a released syncer image (eg. `ghcr.io/kcp-dev/kcp/syncer:main`).
 
    ```shell
    cd <wherever is kcp>
    export KO_DOCKER_REPO=kind.local
    ko build -B ./cmd/syncer
    ```
+
+1. In the kcp terminal, create a SyncTarget with syncer tunnel feature enabled:
+
+    ```shell
+    kubectl kcp workload sync kind --resources=poddisruptionbudgets.policy,horizontalpodautoscalers.autoscaling,services,endpoints,pods --syncer-image kind.local/syncer --feature-gates KCPSyncerTunnel=true -o kind-syncer.yaml
+    ```
 
 1. Register the kind cluster:
 
@@ -80,7 +86,6 @@ cd kcp-playground/knative/in-kcp
    kubectl kcp bind compute root:knative
    ```
 
-
 ## Installing Knative
 
 1. Make sure kubectl points to the kcp knative workspace
@@ -96,7 +101,7 @@ cd kcp-playground/knative/in-kcp
     kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.7.0/serving-crds.yaml
     ```
 
-2. Verify
+1. Verify
 
     ```shell
     kubectl get crds
@@ -120,8 +125,7 @@ cd kcp-playground/knative/in-kcp
 
    You should see only `knative.dev` CRDs.
 
-
-4. Install Knative Serving Core:
+1. Install Knative Serving Core:
 
     ```shell
     kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.7.0/serving-core.yaml
@@ -129,7 +133,13 @@ cd kcp-playground/knative/in-kcp
 
    > Note: ignore the last two errors `no matches for kind "HorizontalPodAutoscaler" in version "autoscaling/v2beta2`
 
-5. Wait a bit (20s-40s or more) and verify all Knative Serving deployments are ready:
+1. Annotate `activator-service` indicating kcp to synchronize derived endpoints to kcp:
+
+   ```shell
+   kubectl annotate -n knative-serving svc activator-service workload.kcp.io/upsync-derived-resources=endpoints
+   ```
+
+1. Wait a bit (20s-40s or more) and verify all Knative Serving deployments are ready:
 
    ```shell
    kubectl -n knative-serving get deployments.apps
@@ -148,13 +158,19 @@ cd kcp-playground/knative/in-kcp
 
    > Note: there is a kcp bug setting default `replicas` to 0 instead of 1
 
-6. Install the networking layer. This guide uses [net-kourier](https://github.com/knative-sandbox/net-kourier).
+1. Install the networking layer. This guide uses [net-kourier](https://github.com/knative-sandbox/net-kourier).
 
    ```shell
-   kubectl apply -f https://github.com/knative/net-kourier/releases/download/knative-v1.6.0/kourier.yaml
+   kubectl apply -f https://github.com/knative/net-kourier/releases/download/knative-v1.7.0/kourier.yaml
    ```
-   k
-7. Since KCP does not support service-based admission controllers yet the config map validating
+
+1. Annotate `kourier-internal` indicating kcp to synchronize derived endpoints to kcp:
+
+   ```shell
+   kubectl annotate -n kourier-system svc kourier-internal workload.kcp.io/upsync-derived-resources=endpoints
+   ```
+
+7. Since KCP does not support service-based admission controllers the config map validating
    webhook needs to be deleted:
 
    ```shell
@@ -190,30 +206,37 @@ cd kcp-playground/knative/in-kcp
 In the KCP terminal, deploy the hello world app:
 
 ```shell
-kn service create hello \
---image gcr.io/knative-samples/helloworld-go \
---port 8080 \
---env TARGET=World
+cat <<EOF | kubectl apply -f -
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: hello
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
+        workload.kcp.io/upsync-derived-resources: endpoints
+    spec:
+      containers:
+      - env:
+        - name: TARGET
+          value: World
+        image: gcr.io/knative-samples/helloworld-go
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+EOF
 ```
 
-The service does not become ready because of the lack of
-support for service-based admission webhooks, preventing defaults to be
-set by Knative defaulting webhooks. Let's add them by hand.
-
-Add PodAutoscaler annotation
-
-```shell
- annotations:
-      autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
-```
-
-
-Issue with endpoints...
-
-Deleting the service is currently not possible due to KCP not embedding a garbage collector.
+Note that:
+  - `autoscaling.knative.dev/class: kpa.autoscaling.knative.dev` must be explicitly set because the defaulting webhook was disabled
+  -  `workload.kcp.io/upsync-derived-resources: endpoints` must be set so that Knative can detect the service is ready
 
 ## TODOs
 
 TODOs:
+- Magic DNS/Real DNS
 - Eventing
 - HPA
+- Deleting service

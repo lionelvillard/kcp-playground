@@ -26,6 +26,37 @@ kubectl apply -f example-apiexport.yaml
 kubectl apply -f example-apilifecycle.yaml
 ```
 
+- Allow admin to access exported content:
+
+```shell
+cat <<EOF | kubectl apply -f -
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: default
+rules:
+  - apiGroups:
+      - apis.kcp.io
+    resources:
+      - apiexports/content
+    verbs:
+      - "*"
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: default
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: default
+subjects:
+  - apiGroup:
+    kind: ServiceAccount
+    name: default
+    namespace: default
+EOF
+```
 
 - Go to your home workspace:
 
