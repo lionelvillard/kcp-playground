@@ -1,77 +1,72 @@
 # Compute: bind k8s compute
 
-This is a getting started guide about kcp and how to create workload workspaces.
+This is a getting started guide about kcp. It shows how to create location workspaces and how to consume (bind) those workspaces inside your user workspace.
 
 ## Running kcp locally
 
-Assuming you have already installed kcp on your computer, run 
+Assuming you have already installed kcp on your computer, run
 the following commands.
 
 - In one terminal, start kcp:
-  
+
   ```shell
   kcp start
   ```
 
-- In another terminal, export KUBECONFIG to point to your KCP instance: 
+- In another terminal, export KUBECONFIG to point to your KCP instance:
 
    ```shell
    export KUBECONFIG=$(pwd)/.kcp/admin.kubeconfig
    ```
-  
-## Create a workload workspace
 
-- Create a workspace of default type (from root: organization)
+## Creating a location workspace
+
+- Create a *location workspace* of default type under root (root:organization)
 
    ```shell
-   kubectl kcp ws create kind --enter
+   kubectl ws root
+   kubectl ws create local --enter
    ```
 
   Output:
 
    ```{ .bash .no-copy }
-   Workspace "kind" (type root:organization) created. Waiting for it to be ready...
-   Workspace "kind" (type root:organization) is ready to use.
-   Current workspace is "root:kind".
+   Workspace "local" (type root:organization) created. Waiting for it to be ready...
+   Workspace "local" (type root:organization) is ready to use.
+   Current workspace is "root:local".
    ```
 
-- Create a SyncTarget in the kind workspace. 
+- Create a SyncTarget in the local workspace.
 
     ```shell
-    kubectl kcp workload sync kind --syncer-image=ghcr.io/kcp-dev/kcp/syncer:main -o kind-syncer.yaml
+    kubectl kcp workload sync local --syncer-image=ghcr.io/kcp-dev/kcp/syncer:main -o local-syncer.yaml
     ```
 
-  This command creates a SyncTarget, a Location and an APIExport.
+  > For local dev using Kind, use `kubectl kcp workload sync local --syncer-image=kind.local/syncer  -o local-syncer.yaml`, assuming using `ko` to build the syncer image and `KO_DOCKER_REPO` is set to `kind.local`
 
-  > For local dev, use kubectl kcp workload sync kind --syncer-image=kind.local/syncer  -o kind-syncer.yaml
+  This command creates:
+  - a SyncTarget object representing the physical cluster
+  - a default Location object with local SyncTarget as being the sole target
+  - an APIBinding object importing root:kubernetes APIs
+  - an APIExport object reexporting kubernetes APIs (and any additional resources specified in the `--resources` command flag. See below for more details).
+  - a manifest file installing the syncer to the physical cluster
 
-- OPTIONAL (create a Kind cluster with Calico) In another terminal, create a kind cluster.
-  Since the default kind CNI does not support network policies you need to disable it and install
-  an CNI plugin support network policies. You can use Calico.
-
-   ```shell
-   kind create cluster --config kind/config-calico.yaml
-   ```
-
-   Install Calico:
-
-   ```shell
-   kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/release-v3.24/manifests/calico.yaml
-   kubectl -n kube-system set env daemonset/calico-node FELIX_IGNORELOOSERPF=true
-   ```
- 
-- Apply the syncer manifest to your kind cluster:
+- Apply the syncer manifest to your (local) cluster (make sure KUBECONFIG points to your physical cluster):
 
   ```shell
-  kubectl apply -f kind-syncer.yaml
+  kubectl apply -f local-syncer.yaml
   ```
 
-- Verify the SyncTarget is ready:
+- Verify the SyncTarget (in kcp) is ready, indicating the syncer deployment in the physical cluster is healthy and has successfully communicating its status back to kcp:
 
   ```shell
-  kubectl get synctargets.workload.kcp.io kind -ojsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+  kubectl get synctargets.workload.kcp.io local -ojsonpath='{.status.conditions[?(@.type=="Ready")].status}'
+  ```
+
+  ```shell
   True
   ```
+
 - Verify the number of available Location is one:
 
   ```shell
@@ -80,53 +75,54 @@ the following commands.
   default   synctargets   1           1                    6m55s
   ```
 
-  The `kind` workspace is a compute workspace. By default, Deployments, Services
-and Ingresses are imported from the location:
+The SyncTarget imports in kcp resources available on the physical clusters, by default deployments, ingresses, services and pods:
 
-   ```shell 
+   ```shell
     kubectl get apiresourceimports
     NAME
-    deployments.kind.v1.apps
-    ingresses.kind.v1.networking.k8s.io
-    services.kind.v1.core
+    deployments.local.v1.apps
+    ingresses.local.v1.networking.k8s.io
+    pods.local.v1.core
+    services.local.v1.core
    ```
 
-Let's import these resources in your workspace.
+  > To import additional resources, add `--resource=<comma-separated resource names` to the `kcp worload sync` command
 
-## Bind to a user workspace
+Let's import these resources in your user workspace.
 
-- Create a workspace of default type (from organization: universal)
+## Consuming location workspaces
+
+- Go to your home workspace:
 
    ```shell
-   kubectl kcp ws create mine --enter
+   kubectl kcp ws
    ```
-
-  Output:
 
    ```{ .bash .no-copy }
-   Workspace "mine" (type root:universal) created. Waiting for it to be ready...
-   Workspace "mine" (type root:universal) is ready to use.
-   Current workspace is "root:kind:mine".
+   Current workspace is "kvdk2spgmbix".
    ```
-  
-Note: the workspace does not have to be a child of `kind`
 
-- Bind compute (ie. Deployments, Services and Ingresses):
+- Bind the location workspace previous created using `kcp bind compute`:
 
    ```shell
-   kubectl kcp bind compute root:kind
+   kubectl kcp bind compute root:local
    ```
 
    Output:
 
   ```shell
-  apibinding kubernetes-1pre20xf for apiexport root:compute:kubernetes created.
-  placement placement-2iddvmcj created. 
-  ``` 
+  Binding APIExport "root:compute:kubernetes".
+  placement placement-ej377u0k created.
+  Placement "placement-ej377u0k" is ready.
+  ```
 
-- Create a deployment in the user1 workspace
+  This command creates two objects:
+  - an APIBinding object importing the standard kubernetes APIs exported by the `root:compute` workspace
+  - a Placement object indicating that all objects, in all namespaces in your home workspace are placed in the location workspace `root:local`.
 
-  ```shell 
+- Create a deployment:
+
+  ```shell
   kubectl create deployment --image=gcr.io/kuar-demo/kuard-amd64:blue --port=8080 kuard
   ```
 
@@ -135,3 +131,5 @@ Note: the workspace does not have to be a child of `kind`
   ```shell
   deployment.apps/kuard created
   ```
+
+Voila!

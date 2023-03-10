@@ -1,2 +1,4 @@
 .kcp/
-
+.DS_Store
+kind-syncer.yaml
+local-syncer.yaml
