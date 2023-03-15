@@ -1,0 +1,12 @@
+apiVersion: tenancy.kcp.io/v1alpha1
+kind: WorkspaceType
+metadata:
+  name: local
+spec:
+  extend:
+    with:
+    - path: root
+      name: universal
+  defaultAPIBindings:
+  - path: root:platform:kafka
+    export: local

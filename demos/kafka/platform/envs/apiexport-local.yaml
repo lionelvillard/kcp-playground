@@ -1,0 +1,8 @@
+apiVersion: apis.kcp.io/v1alpha1
+kind: APIExport
+metadata:
+  name: local
+spec:
+  permissionClaims:
+    - resource: secrets
+      all: true

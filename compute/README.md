@@ -42,7 +42,7 @@ the following commands.
     kubectl kcp workload sync local --syncer-image=ghcr.io/kcp-dev/kcp/syncer:main -o local-syncer.yaml
     ```
 
-  > For local dev using Kind, use `kubectl kcp workload sync local --syncer-image=kind.local/syncer  -o local-syncer.yaml`, assuming using `ko` to build the syncer image and `KO_DOCKER_REPO` is set to `kind.local`
+  > For local dev using Kind, use `kubectl kcp workload sync local --syncer-image=kind.local/syncer -o local-syncer.yaml`, assuming using `ko` to build the syncer image and `KO_DOCKER_REPO` is set to `kind.local`
 
   This command creates:
   - a SyncTarget object representing the physical cluster
