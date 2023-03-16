@@ -150,3 +150,13 @@ kafka-credentials   Opaque   1      2m22s
 ```
 
 This secret can be imported by your application.
+
+
+## In Progress
+
+- Real Kafka credential
+- More environment
+- Integrate crossplane
+- gitops
+- observability
+- knative
