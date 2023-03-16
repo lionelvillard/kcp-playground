@@ -51,7 +51,7 @@ func handle(w http.ResponseWriter, req *http.Request) {
 					"apiVersion": "v1",
           "kind": "Secret",
 					"metadata": {
-						"name": "kafka-cluster"
+						"name": "kafka-credentials"
 					},
 					"stringData": {
 						"avery": "secret"

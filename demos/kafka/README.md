@@ -6,14 +6,14 @@ This is a demo showing how to offer Apache Kafka as a service using kcp.
 
 The goal is to trivialize setting up environments needed to run applications
 depending on external services. Suppose your application depends on Apache Kafka,
-this one-liner creates a workspace containing the necessary objects to access a Apache Kafka cluster
+this one-liner creates a workspace containing the necessary objects to access an Apache Kafka cluster
 ready for your application use:
 
 ```shell
-kubectl kcp ws create my-kafka-app --type kafka.local
+kubectl kcp ws create my-kafka-app --type root:platform:kafka:local
 ```
 
-Let's see how that's done.
+Let's see how that's done using kcp API export/binding and configuration management capabilities.
 
 ## Prerequisites
 
@@ -23,7 +23,7 @@ Make sure you have configured `KUBECONFIG` to access kcp. See [kcp quickstart](h
 
 Suppose your organization has a platform engineering team using kcp as the internal developer
 platform backend to offer self-service services such as Apache Kafka. This team provides all
-services from `platform` workspace:
+services from the `platform` workspace:
 
 - Create the `platform` workspace where all resources related to the organization platform will be stored:
 
@@ -37,7 +37,7 @@ services from `platform` workspace:
   Current workspace is "root:platform" (type root:organization).
   ```
 
-Application developers can create workspaces under the projects workspaces they have access to.
+Application developers can create workspaces under the application workspaces they have access to.
 
 - Create the `applications` workspace containing all applications in your organization:
 
@@ -103,8 +103,6 @@ Application developers can create workspaces under the projects workspaces they 
 
 #### Local Development
 
-The local development environment uses a fully-managed multi-tenant Apache Kafka service.
-
 - Create the APIExport object giving access to a single Kafka cluster. No APIs are exposed, only a
   permission request to create/update a secret containing the Kafka cluster credential:
 
@@ -134,7 +132,7 @@ go run platform/webhook/main.go
 
 ## Writing your Kafka-based application
 
-Create an workspace hosting all assets for your application:
+Create a workspace hosting all assets for your application:
 
 ```shell
 kubectl ws root:applications && kubectl ws create hello-kafka --type root:platform:kafka:local --enter
@@ -152,4 +150,3 @@ kafka-credentials   Opaque   1      2m22s
 ```
 
 This secret can be imported by your application.
-
