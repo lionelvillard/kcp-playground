@@ -8,7 +8,7 @@ Status: some kcp features are still missing for this guide to be completed. WIP.
 
 - A Kubernetes cluster.
 - ko (optional)
-- kcp source code clone locally and https://github.com/kcp-dev/kcp/pull/2829 checked out.
+- kcp source code clone locally and https://github.com/kcp-dev/kcp/pull/2910 checked out.
 
 ## Clone this repository
 
@@ -21,10 +21,10 @@ cd kcp-playground/knative/in-kcp
 
 ## Preparing kcp
 
-1. In a terminal, start kcp with pod synchronization enabled:
+1. In a terminal, start kcp:
 
    ```shell
-   kcp start --feature-gates KCPSyncerTunnel=true
+   kcp start
    ```
 
 1. In the kcp terminal, make sure your KUBECONFIG points to your kcp instance:
@@ -47,10 +47,10 @@ cd kcp-playground/knative/in-kcp
 
 ## Registering Kind as a SyncTarget
 
-1. In a new terminal, create a Kind cluster:
+1. In a new terminal, create a Kind cluster configured to map Knative ingress to localhost port 80:
 
    ```shell
-   kind create cluster
+   kind create cluster --config kind/config-knative.yaml
    ```
 
 1. (optional) Build the syncer image from kcp source. if not replace `kind.local/syncer` below to point to a released syncer image (eg. `ghcr.io/kcp-dev/kcp/syncer:main`).
@@ -61,10 +61,10 @@ cd kcp-playground/knative/in-kcp
    ko build -B ./cmd/syncer
    ```
 
-1. In the kcp terminal, create a SyncTarget with syncer tunnel feature enabled:
+1. In the kcp terminal, create a SyncTarget:
 
     ```shell
-    kubectl kcp workload sync kind --resources=poddisruptionbudgets.policy,horizontalpodautoscalers.autoscaling,services,endpoints,pods --syncer-image kind.local/syncer --feature-gates KCPSyncerTunnel=true -o kind-syncer.yaml
+    kubectl kcp workload sync kind --resources=poddisruptionbudgets.policy,horizontalpodautoscalers.autoscaling --syncer-image kind.local/syncer -o kind-syncer.yaml
     ```
 
 1. Register the kind cluster:
@@ -80,7 +80,7 @@ cd kcp-playground/knative/in-kcp
     True
     ```
 
-1. Finally, bind compute (ie. Deployments, Services and Ingresses):
+1. Finally, bind compute (ie. Deployments, Services, Ingresses and Pods):
 
    ```shell
    kubectl kcp bind compute root:knative
@@ -98,7 +98,7 @@ cd kcp-playground/knative/in-kcp
 1. Install the Knative CRDs in the kcp knative workspace
 
     ```shell
-    kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.7.0/serving-crds.yaml
+    kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.9.2/serving-crds.yaml
     ```
 
 1. Verify
@@ -128,15 +128,13 @@ cd kcp-playground/knative/in-kcp
 1. Install Knative Serving Core:
 
     ```shell
-    kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.7.0/serving-core.yaml
+    kubectl apply -f https://github.com/knative/serving/releases/download/knative-v1.9.2/serving-core.yaml
     ```
-
-   > Note: ignore the last two errors `no matches for kind "HorizontalPodAutoscaler" in version "autoscaling/v2beta2`
 
 1. Annotate `activator-service` indicating kcp to synchronize derived endpoints to kcp:
 
    ```shell
-   kubectl annotate -n knative-serving svc activator-service workload.kcp.io/upsync-derived-resources=endpoints
+   kubectl annotate -n knative-serving svc activator-service experimental.workload.kcp.io/upsync-derived-resources=endpoints
    ```
 
 1. Wait a bit (20s-40s or more) and verify all Knative Serving deployments are ready:
@@ -161,24 +159,16 @@ cd kcp-playground/knative/in-kcp
 1. Install the networking layer. This guide uses [net-kourier](https://github.com/knative-sandbox/net-kourier).
 
    ```shell
-   kubectl apply -f https://github.com/knative/net-kourier/releases/download/knative-v1.7.0/kourier.yaml
+   kubectl apply -f https://github.com/knative/net-kourier/releases/download/knative-v1.9.2/kourier.yaml
    ```
 
 1. Annotate `kourier-internal` indicating kcp to synchronize derived endpoints to kcp:
 
    ```shell
-   kubectl annotate -n kourier-system svc kourier-internal workload.kcp.io/upsync-derived-resources=endpoints
+   kubectl annotate -n kourier-system svc kourier-internal experimental.workload.kcp.io/upsync-derived-resources=endpoints
    ```
 
-7. Since KCP does not support service-based admission controllers the config map validating
-   webhook needs to be deleted:
-
-   ```shell
-   kubectl delete validatingwebhookconfigurations.admissionregistration.k8s.io --all
-   kubectl delete mutatingwebhookconfigurations.admissionregistration.k8s.io  --all
-   ```
-
-8. Patch the network configmap:
+1. Patch the network configmap:
 
    ```shell
    kubectl patch configmap/config-network \
@@ -187,7 +177,7 @@ cd kcp-playground/knative/in-kcp
            --patch '{"data":{"ingress-class":"kourier.ingress.networking.knative.dev"}}'
    ```
 
-9. Verify kourier is up and running:
+1. Verify kourier is up and running:
 
    ```shell
    kubectl get deployments.apps -n kourier-system
@@ -201,42 +191,82 @@ cd kcp-playground/knative/in-kcp
    net-kourier-controller   1/1     1            1           2m45s
    ```
 
-## Deploying your first Knative service
-
-In the KCP terminal, deploy the hello world app:
+1. Setup magic DNS:
 
 ```shell
 cat <<EOF | kubectl apply -f -
-apiVersion: serving.knative.dev/v1
+apiVersion: v1
 kind: Service
 metadata:
-  name: hello
+  name: kourier-ingress
+  namespace: kourier-system
+  labels:
+   networking.knative.dev/ingress-provider: kourier
 spec:
-  template:
-    metadata:
-      annotations:
-        autoscaling.knative.dev/class: kpa.autoscaling.knative.dev
-        workload.kcp.io/upsync-derived-resources: endpoints
-    spec:
-      containers:
-      - env:
-        - name: TARGET
-          value: World
-        image: gcr.io/knative-samples/helloworld-go
-        ports:
-        - containerPort: 8080
-          protocol: TCP
+  type: NodePort
+  selector:
+    app: 3scale-kourier-gateway
+  ports:
+  - name: http2
+    nodePort: 31080
+    port: 80
+    targetPort: 8080
 EOF
 ```
 
+```shell
+kubectl  patch configmap -n knative-serving config-domain \
+  -p '{"data": {"127.0.0.1.sslip.io": ""}}'
+```
+
+## Deploying your first Knative service
+
+In the KCP terminal, deploy the hello world app using kn:
+
+   ```shell
+   kn service create hello \
+   --image gcr.io/knative-samples/helloworld-go \
+   --port 8080 \
+   --env TARGET=World \
+   --annotation-revision experimental.workload.kcp.io/upsync-derived-resources=endpoints
+   ``````
+
+```
+kn service create hello \
+   --image gcr.io/knative-samples/helloworld-go \
+   --port 8080 \
+   --env TARGET=World \
+   --annotation-revision experimental.workload.kcp.io/upsync-derived-resources=endpoints
+Warning: Kubernetes default value is insecure, Knative may default this to secure in a future release: spec.template.spec.containers[0].securityContext.allowPrivilegeEscalation, spec.template.spec.containers[0].securityContext.capabilities, spec.template.spec.containers[0].securityContext.runAsNonRoot, spec.template.spec.containers[0].securityContext.seccompProfile
+Creating service 'hello' in namespace 'default':
+
+  1.083s The Configuration is still working to reflect the latest desired specification.
+  2.070s Configuration "hello" is waiting for a Revision to become ready.
+ 39.716s ...
+ 40.141s Ingress has not yet been reconciled.
+ 40.524s Waiting for load balancer to be ready
+ 40.801s Ready to serve.
+
+Service 'hello' created to latest revision 'hello-00001' is available at URL:
+http://hello.default.127.0.0.1.sslip.io
+```
+
 Note that:
-  - `autoscaling.knative.dev/class: kpa.autoscaling.knative.dev` must be explicitly set because the defaulting webhook was disabled
-  -  `workload.kcp.io/upsync-derived-resources: endpoints` must be set so that Knative can detect the service is ready
+  -  `experimental.workload.kcp.io/upsync-derived-resources: endpoints` must be set so that Knative can detect the service is ready
+
+
+## Testing
+
+Since the `hello` Knative service has been installed locally using Kind, you can test the service with curl:
+
+   ```shell
+   curl http://hello.default.127.0.0.1.sslip.io
+   Hello World!
+   ```
 
 ## TODOs
 
 TODOs:
-- Magic DNS/Real DNS
 - Eventing
 - HPA
 - Deleting service
