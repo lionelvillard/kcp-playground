@@ -97,10 +97,10 @@ The easiest way to install Knative to a physical cluster is to use the [Knative 
   kubectl kcp ws root:knative
   ```
 
-- Create a SyncTarget and ask to synchronize knative serving APIs (and kubernetes resources (for now))
+- Create a SyncTarget and ask to synchronize knative serving APIs only:
 
   ```shell
-  kubectl kcp workload sync kind --apiexports=root:knative:serving,root:compute:kubernetes --syncer-image=ghcr.io/kcp-dev/kcp/syncer:main -o kind-syncer.yaml
+  kubectl kcp workload sync kind --apiexports=root:knative:serving --syncer-image=ghcr.io/kcp-dev/kcp/syncer:main -o kind-syncer.yaml
   ```
 
 - Apply the syncer manifest into your kind cluster:
