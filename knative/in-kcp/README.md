@@ -268,5 +268,4 @@ Since the `hello` Knative service has been installed locally using Kind, you can
 
 TODOs:
 - Eventing
-- HPA
 - Deleting service

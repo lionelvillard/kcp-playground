@@ -29,7 +29,7 @@ kn quickstart kind --install-serving
 
 This command creates a kind cluster named `knative` and installs Knative Serving.
 
-## Create an API workspace exposing Knative APIs
+## Create a workspace holding Knative artifacts
 
 - Create a workspace:
 
@@ -51,14 +51,13 @@ This command creates a kind cluster named `knative` and installs Knative Serving
 
 ## Bind the Knative Serving API in your home workspace
 
-
 - Go to your home workspace:
 
   ```shell
   kubectl kcp ws
   ```
 
-- Then bind:
+- Then bind to the API:
 
   ```shell
   kubectl kcp bind apiexport root:knative:serving
@@ -71,7 +70,7 @@ This command creates a kind cluster named `knative` and installs Knative Serving
   services                          kservice,ksvc   serving.knative.dev/v1            true         Service
   ````
 
-At this point you should be able to deploy a Knative service:
+At this point you should be able to create a Knative service:
 
 ```shell
 kn service create hello \
@@ -82,9 +81,9 @@ kn service create hello \
 
 Since your home workspace is not bound to a location workspace the Knative service fails to become ready. Let's fix that.
 
-## Create a Knative location workspace
+## Add a Knative location
 
-The easiest way to install Knative is to use the [Knative quickstart installation method](https://knative.dev/docs/install/quickstart-install/).
+The easiest way to install Knative to a physical cluster is to use the [Knative quickstart installation method](https://knative.dev/docs/install/quickstart-install/).
 
 - After installing the quickstart kn plugin, run this command (in a fresh new terminal):
 
@@ -92,17 +91,16 @@ The easiest way to install Knative is to use the [Knative quickstart installatio
   kn quickstart kind --install-serving
   ```
 
-- Back to the kcp terminal, create a location workspace:
+- Back to the kcp terminal, switch the knative workspace:
 
   ```shell
-  kubectl kcp ws root
-  kubectl kcp ws create kind-knative --enter
+  kubectl kcp ws root:knative
   ```
 
-- Create a synctarget and ask to synchronize knative serving APIs (TODO: ideally only those APIs)
+- Create a SyncTarget and ask to synchronize knative serving APIs (and kubernetes resources (for now))
 
   ```shell
-  kubectl kcp workload sync kind --resources=services.serving.knative.dev --syncer-image=ghcr.io/kcp-dev/kcp/syncer:main -o kind-syncer.yaml
+  kubectl kcp workload sync kind --apiexports=root:knative:serving,root:compute:kubernetes --syncer-image=ghcr.io/kcp-dev/kcp/syncer:main -o kind-syncer.yaml
   ```
 
 - Apply the syncer manifest into your kind cluster:
@@ -116,6 +114,24 @@ The easiest way to install Knative is to use the [Knative quickstart installatio
   ```shell
   kubectl get synctargets.workload.kcp.io kind -ojsonpath='{.status.conditions[?(@.type=="Ready")].status}'
   True
+  ```
+
+- Verify all bound resources are compatible with the resources available in the physical cluster:
+
+  ```shell
+  kubectl get synctargets.workload.kcp.io kind -oyaml
+  ```
+
+  ```yaml
+  ...
+   syncedResources:
+   - group: serving.knative.dev
+     identityHash: 714b9f57a70690e65ccbce50fea9f01efad00573d5da03c8f3a9feb3ff5d9ca6
+     resource: services
+     state: Accepted
+     versions:
+     - v1
+  ...
   ```
 
 ## Bind your home workspace to the knative location workspace
@@ -132,27 +148,18 @@ The easiest way to install Knative is to use the [Knative quickstart installatio
   kubectl apply -f kind-placement.yaml
   ```
 
-At this point I would expect the previous created Knative Service to be synchronized to the knative location but it's not happening.
-
-As a workaround, delete `hello`:
+- Wait a bit and you should see the `hello` service is ready:
 
   ```shell
-  kn service delete hello
+  kubectl get ksvc hello
   ```
 
-And recreate:
-
   ```shell
-  kn service create hello \
-  --image gcr.io/knative-samples/helloworld-go \
-  --port 8080 \
-  --env TARGET=World
+  NAME    URL                                                LATESTCREATED   LATESTREADY   READY   REASON
+  hello   http://hello.kcp-2hs1yezgzr6n.127.0.0.1.sslip.io   hello-00001     hello-00001   True
   ```
 
 ## Delete the placement
 
 I would expect the object to be deleted on the physical clusters.
-I would expect new services to not be synchronized.
-
-
 

@@ -22,7 +22,7 @@ the following commands.
 The easiest way to install Knative is to use the [Knative quickstart installation method](https://knative.dev/docs/install/quickstart-install/).
 
 After installing the quickstart kn plugin, run this command (in a fresh new terminal):
-     
+
 ```shell
 kn quickstart kind --install-serving
 ```
@@ -67,7 +67,7 @@ This command creates a kind cluster named `knative` and installs Knative Serving
 - Place root:knative-app in root:knative-app location
 
   ```shell
-  kubectl kcp bind compute root:knative-app
+  kubectl apply -f kind-placement.yaml
   ```
 
 ## Testing
@@ -86,7 +86,7 @@ After a while, observe the service is ready:
 ```shell
 kubectl get ksvc
 NAME    URL                                                LATESTCREATED   LATESTREADY   READY   REASON
-hello   http://hello.kcp-5tyerk3vym4m.127.0.0.1.sslip.io   hello-00001     hello-00001   True    
+hello   http://hello.kcp-5tyerk3vym4m.127.0.0.1.sslip.io   hello-00001     hello-00001   True
 ```
 
 Then curl it:
@@ -95,5 +95,3 @@ Then curl it:
 curl http://hello.kcp-5tyerk3vym4m.127.0.0.1.sslip.io
 Hello World!
 ```
-
-
