@@ -1,4 +1,4 @@
-# Synchronizing Knative APIs in a physical cluster to kcp
+# Providing physical Knative as a Service
 
 ## Running kcp locally
 

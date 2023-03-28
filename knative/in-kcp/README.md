@@ -1,4 +1,4 @@
-# Installing Knative Serving in KCP
+# Providing logical Knative as a Service
 
 This guide describes the steps to install Knative Serving in [kcp](http://kcp.io).
 
