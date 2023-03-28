@@ -142,11 +142,12 @@ The easiest way to install Knative to a physical cluster is to use the [Knative 
   kubectl kcp ws
   ```
 
-- And create a placement (TODO: currently it does not seem to be possible to just create a placement using the kcp command line)
+- And create a placement:
 
   ```shell
-  kubectl apply -f kind-placement.yaml
+  kubectl kcp bind compute root:knative --apiexports=root:knative:serving --name location1
   ```
+
 
 - Wait a bit and you should see the `hello` service is ready:
 
@@ -161,5 +162,10 @@ The easiest way to install Knative to a physical cluster is to use the [Knative 
 
 ## Delete the placement
 
-I would expect the object to be deleted on the physical clusters.
+- Delete the placement object:
 
+  ```shell
+  kubectl delete placement location1
+  ```
+
+  Wait a bit (30s by default) and observe in the physical cluster the objects have been deleted.
